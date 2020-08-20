@@ -4,43 +4,51 @@ import SpeechRecognition, {
   useSpeechRecognition,
 } from 'react-speech-recognition';
 
+import httpRequest from '../helpers/httpClient';
+import changeStyles from '../helpers/utils';
+
 const TodoApp = () => {
-  const { transcript, resetTranscript } = useSpeechRecognition('');
+  const { transcript, resetTranscript, listening } = useSpeechRecognition('');
   const [todos, setTodos] = useState([]);
   const [prevTodos, setprevTodos] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [listening, setListening] = useState(false);
   const [item, setItem] = useState('');
   const API_URL = 'https://abhility-fakedb.glitch.me/todos';
   const filterRef = useRef(null);
   const sortRef = useRef(null);
 
-  const fetchData = (showLoader) => {
+  const supportsSpeechRecognition = SpeechRecognition.browserSupportsSpeechRecognition();
+
+  const fetchData = async (showLoader) => {
     setLoading(showLoader);
-    fetch(API_URL)
-      .then((res) => res.json())
-      .then((data) => {
-        setLoading(false);
-        data = data.map((item) => {
-          return {
-            ...item,
-            loading: false,
-            name: item.name.toLowerCase(),
-            date: new Date(item.date),
-          };
-        });
-        data = data.reverse();
-        Array.isArray(data)
-          ? setTodos((prev) => {
-              setprevTodos(data);
-              return data;
-            })
-          : setTodos([]);
-      })
-      .catch((err) => {
-        setLoading(false);
-        console.log(err);
+    try {
+      let data = await httpRequest(API_URL, 'GET', null);
+      data = data.reverse().map((item) => {
+        return {
+          ...item,
+          loading: false,
+          name: item.name.toLowerCase(),
+          date: new Date(item.date).toLocaleString('en-US', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            hour: 'numeric',
+            minute: 'numeric',
+          }),
+        };
       });
+      if (Array.isArray(data)) {
+        setTodos(data);
+        setprevTodos(data);
+        changeStyles(filterRef, null);
+        changeStyles(sortRef, null);
+      }
+      setLoading(false);
+    } catch (err) {
+      setLoading(false);
+      console.log(err);
+    }
   };
 
   const handleChange = (event) => {
@@ -48,7 +56,7 @@ const TodoApp = () => {
     setItem(value);
   };
 
-  const addTodo = (event) => {
+  const addTodo = async (event) => {
     event.preventDefault();
     setLoading(true);
     const todo = {
@@ -56,28 +64,22 @@ const TodoApp = () => {
       date: Date.now(),
       done: false,
     };
-
     setItem('');
-
-    fetch(API_URL, {
-      method: 'POST',
-      body: JSON.stringify(todo),
-      headers: {
-        'content-type': 'application/json',
-      },
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        fetchData(true);
-        addedDateSort();
-      })
-      .catch((err) => {
-        setLoading(false);
-        console.log(err);
+    try {
+      await httpRequest(API_URL, 'POST', todo);
+      await fetchData(false);
+      window.M.toast({
+        html: '<h6>Todo item added!</h6>',
+        classes: 'green accent-4 white-text',
+        displayLength: 1500,
       });
+    } catch (err) {
+      setLoading(false);
+      console.log(err);
+    }
   };
 
-  const deleteItem = (id) => {
+  const deleteItem = async (id) => {
     let newTodos = todos.map((todo) => {
       if (todo.id === id) {
         todo.loading = true;
@@ -85,62 +87,54 @@ const TodoApp = () => {
       return todo;
     });
     setTodos(newTodos);
-    fetch(`${API_URL}/${id}`, {
-      method: 'DELETE',
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        fetchData(false);
-      })
-      .catch((err) => {
-        console.log(err);
+    try {
+      await httpRequest(`${API_URL}/${id}`, 'DELETE', null);
+      await fetchData(false);
+      window.M.toast({
+        html: '<h6>Todo item deleted!</h6>',
+        classes: 'red accent-4 white-text',
+        displayLength: 1500,
       });
+    } catch (err) {
+      setLoading(false);
+      console.log(err);
+    }
   };
 
-  const alterItem = (id) => {
+  const alterItem = async (id) => {
     let newTodos = todos.map((todo) => {
       if (todo.id === id) {
         todo.loading = true;
       }
       return todo;
     });
-    setTodos(newTodos);
+
     let todo = todos.find((todo) => todo.id === id);
     todo = { ...todo, done: !todo.done };
-    fetch(`${API_URL}/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify(todo),
-      headers: {
-        'content-type': 'application/json',
-      },
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        fetchData(false);
-      })
-      .catch((err) => {
-        console.log(err);
-      });
+    setTodos(newTodos);
+    try {
+      await httpRequest(`${API_URL}/${id}`, 'PUT', todo);
+      await fetchData(false);
+      todo.done
+        ? window.M.toast({
+            html: '<h6>Marked as completed!</h6>',
+            classes: 'teal accent-4 white-text',
+            displayLength: 1500,
+          })
+        : window.M.toast({
+            html: '<h6>Marked as Inprogress!</h6>',
+            classes: 'teal accent-4 white-text',
+            displayLength: 1500,
+          });
+    } catch (err) {
+      setLoading(false);
+      console.log(err);
+    }
   };
 
   useEffect(() => {
     fetchData(true);
   }, []);
-
-  const changeStyles = (targetRef, targetEvent) => {
-    const { target: currentElement } = targetEvent;
-    targetRef.current.childNodes.forEach((child, index) => {
-      if (index > 0) {
-        child.classList.remove('teal');
-        child.classList.remove('white-text');
-        child.classList.remove('z-depth-3');
-      }
-    });
-
-    currentElement.classList.add('teal');
-    currentElement.classList.add('white-text');
-    currentElement.classList.add('z-depth-3');
-  };
 
   const alphabeticSort = (event) => {
     changeStyles(sortRef, event);
@@ -175,15 +169,18 @@ const TodoApp = () => {
     setTodos(prevTodos);
   };
 
-  const listen = (event) => {
+  const listen = (start) => {
     resetTranscript('');
-    setListening((prevListening) => {
-      !prevListening
-        ? SpeechRecognition.startListening()
-        : SpeechRecognition.stopListening();
-      return !prevListening;
-    });
-
+    if (start) {
+      window.M.toast({
+        html: '<h6>This feature is still in beta testing phase</h6>',
+        classes: 'black accent-4 white-text',
+        displayLength: 2500,
+      });
+      SpeechRecognition.startListening();
+    } else {
+      SpeechRecognition.stopListening();
+    }
     setItem(transcript);
   };
 
@@ -201,7 +198,6 @@ const TodoApp = () => {
             className="validate"
             required
           />
-          {/* <label htmlFor="input">Type here</label> */}
         </div>
         <div className="input-field col s6 l2 m2">
           <button
@@ -211,19 +207,27 @@ const TodoApp = () => {
             <i className="material-icons">edit</i>
           </button>
         </div>
-        <div className="input-field col s6 l2 m2">
-          <button
-            type="button"
-            className={
-              listening
-                ? 'btn-floating btn-large waves-effect waves-light hoverable red pulse'
-                : 'btn-floating btn-large waves-effect waves-light hoverable teal'
-            }
-            onClick={listen}
-          >
-            <i className="material-icons">{listening ? 'stop' : 'mic'}</i>
-          </button>
-        </div>
+        {supportsSpeechRecognition && (
+          <div className="input-field col s6 l2 m2">
+            {listening ? (
+              <button
+                type="button"
+                className="btn-floating btn-large waves-effect waves-light hoverable red pulse"
+                onClick={listen.bind(null, false)}
+              >
+                <i className="material-icons">stop</i>
+              </button>
+            ) : (
+              <button
+                type="button"
+                className="btn-floating btn-large waves-effect waves-light hoverable teal"
+                onClick={listen.bind(null, true)}
+              >
+                <i className="material-icons">mic</i>
+              </button>
+            )}
+          </div>
+        )}
       </form>
       {listening && (
         <div className="container row">

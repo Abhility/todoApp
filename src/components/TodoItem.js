@@ -23,14 +23,7 @@ const TodoItem = (props) => {
           </h5>
           <p className="grey-text chip todo-date">
             <span className="teal-text">Added On : </span>
-            {data.date.toLocaleString('en-US', {
-              weekday: 'long',
-              year: 'numeric',
-              month: 'long',
-              day: 'numeric',
-              hour: 'numeric',
-              minute: 'numeric',
-            })}
+            {data.date}
           </p>
         </section>
         <section className="todo-actions">
