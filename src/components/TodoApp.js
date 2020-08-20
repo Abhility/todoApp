@@ -12,11 +12,8 @@ const TodoApp = () => {
   const [listening, setListening] = useState(false);
   const [item, setItem] = useState('');
   const API_URL = 'https://abhility-fakedb.glitch.me/todos';
-  const dateSort = useRef(null);
-  const alphabetSort = useRef(null);
-  const filterComplete = useRef(null);
-  const filterInprogress = useRef(null);
-  const all = useRef(null);
+  const filterRef = useRef(null);
+  const sortRef = useRef(null);
 
   const fetchData = (showLoader) => {
     setLoading(showLoader);
@@ -126,78 +123,57 @@ const TodoApp = () => {
       });
   };
 
-  const alphabeticSort = () => {
-    alphabetSort.current.classList.add('white-text');
-    alphabetSort.current.classList.add('teal');
-    alphabetSort.current.classList.add('z-depth-3');
-    dateSort.current.classList.remove('white-text');
-    dateSort.current.classList.remove('teal');
-    dateSort.current.classList.remove('z-depth-3');
+  useEffect(() => {
+    fetchData(true);
+  }, []);
 
+  const changeStyles = (targetRef, targetEvent) => {
+    const { target: currentElement } = targetEvent;
+    targetRef.current.childNodes.forEach((child, index) => {
+      if (index > 0) {
+        child.classList.remove('teal');
+        child.classList.remove('white-text');
+        child.classList.remove('z-depth-3');
+      }
+    });
+
+    currentElement.classList.add('teal');
+    currentElement.classList.add('white-text');
+    currentElement.classList.add('z-depth-3');
+  };
+
+  const alphabeticSort = (event) => {
+    changeStyles(sortRef, event);
     const sortedTodos = todos.sort((first, second) =>
       first.name < second.name ? -1 : first.name > second.name ? 1 : 0
     );
     setTodos((prevTodos) => [...sortedTodos]);
   };
 
-  const addedDateSort = () => {
-    dateSort.current.classList.add('white-text');
-    dateSort.current.classList.add('teal');
-    dateSort.current.classList.add('z-depth-3');
-    alphabetSort.current.classList.remove('white-text');
-    alphabetSort.current.classList.remove('teal');
-    alphabetSort.current.classList.remove('z-depth-3');
+  const addedDateSort = (event) => {
+    changeStyles(sortRef, event);
     const sortedTodos = todos.sort((first, second) =>
       first.date > second.date ? -1 : first.date < second.date ? 1 : 0
     );
     setTodos((prevTodos) => [...sortedTodos]);
   };
 
-  const filterByComplete = () => {
-    filterComplete.current.classList.add('white-text');
-    filterComplete.current.classList.add('teal');
-    filterComplete.current.classList.add('z-depth-3');
-    filterInprogress.current.classList.remove('white-text');
-    filterInprogress.current.classList.remove('teal');
-    filterInprogress.current.classList.remove('z-depth-3');
-    all.current.classList.remove('white-text');
-    all.current.classList.remove('teal');
-    all.current.classList.remove('z-depth-3');
+  const filterByComplete = (event) => {
+    changeStyles(filterRef, event);
     const filteredTodos = prevTodos.filter((todo) => todo.done);
     setTodos((prevTodos) => [...filteredTodos]);
   };
 
-  const filterByInprogress = () => {
-    filterInprogress.current.classList.add('white-text');
-    filterInprogress.current.classList.add('teal');
-    filterInprogress.current.classList.add('z-depth-3');
-    filterComplete.current.classList.remove('white-text');
-    filterComplete.current.classList.remove('teal');
-    filterComplete.current.classList.remove('z-depth-3');
-    all.current.classList.remove('white-text');
-    all.current.classList.remove('teal');
-    all.current.classList.remove('z-depth-3');
+  const filterByInprogress = (event) => {
+    changeStyles(filterRef, event);
     const filteredTodos = prevTodos.filter((todo) => !todo.done);
     setTodos((prevTodos) => [...filteredTodos]);
   };
 
-  const showAll = () => {
-    filterInprogress.current.classList.remove('white-text');
-    filterInprogress.current.classList.remove('teal');
-    filterInprogress.current.classList.remove('z-depth-3');
-    filterComplete.current.classList.remove('white-text');
-    filterComplete.current.classList.remove('teal');
-    filterComplete.current.classList.remove('z-depth-3');
-    all.current.classList.add('white-text');
-    all.current.classList.add('teal');
-    all.current.classList.add('z-depth-3');
+  const showAll = (event) => {
+    changeStyles(filterRef, event);
     setTodos(prevTodos);
   };
-
-  useEffect(() => {
-    fetchData(true);
-    addedDateSort();
-  }, []);
 
   const listen = (event) => {
     resetTranscript('');
@@ -254,29 +230,21 @@ const TodoApp = () => {
           <h6 className="col s12 l12 m12 teal-text">Listening...</h6>
         </div>
       )}
-      <div className="actions container row">
+      <div className="actions container row" ref={sortRef}>
         <span className="chip col s8 l2 orange white-text action-label z-depth-3">
           <i className="material-icons">sort</i>
           Sort By
         </span>
         <span className="col s0 l4" />
-        <span
-          className="chip col s8 l2 action-button"
-          ref={alphabetSort}
-          onClick={alphabeticSort}
-        >
+        <span className="chip col s8 l2 action-button" onClick={alphabeticSort}>
           Alphabetically
         </span>
         <span className="col s0 l2" />
-        <span
-          className="chip col s8 l2 action-button"
-          ref={dateSort}
-          onClick={addedDateSort}
-        >
+        <span className="chip col s8 l2 action-button" onClick={addedDateSort}>
           Added Date
         </span>
       </div>
-      <div className="actions container row">
+      <div className="actions container row" ref={filterRef}>
         <span className="chip col s8 l2 green white-text action-label z-depth-3">
           <i className="material-icons">photo_filter</i>
           Filter By
@@ -284,23 +252,17 @@ const TodoApp = () => {
         <span className="col s0 l2" />
         <span
           className="chip col s8 l2 action-button"
-          ref={filterComplete}
           onClick={filterByComplete}
         >
           Completed
         </span>
         <span
           className="chip col s8 l2 action-button"
-          ref={filterInprogress}
           onClick={filterByInprogress}
         >
           Inprogress
         </span>
-        <span
-          className="chip col s8 l2 action-button"
-          ref={all}
-          onClick={showAll}
-        >
+        <span className="chip col s8 l2 action-button" onClick={showAll}>
           All
         </span>
       </div>
