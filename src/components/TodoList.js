@@ -1,7 +1,8 @@
 import React from 'react';
 import TodoItem from './TodoItem';
 
-export default function TodoList({ todos, deleteItem, alterItem }) {
+const TodoList = (props) => {
+  const { todos, deleteItem, alterItem, loading } = props;
   const todoList = todos.map((todo) => (
     <TodoItem
       key={todo.id}
@@ -11,7 +12,21 @@ export default function TodoList({ todos, deleteItem, alterItem }) {
     ></TodoItem>
   ));
 
-  const content = 'No Todos in your list';
+  return (
+    <ul className="collection">
+      {loading && (
+        <li className="collection-item loader">
+          <img
+            src="../spin.gif"
+            alt="loading..."
+            height="100px"
+            width="100px"
+          />
+        </li>
+      )}
+      {todoList}
+    </ul>
+  );
+};
 
-  return <ul className="collection">{todoList}</ul>;
-}
+export default TodoList;

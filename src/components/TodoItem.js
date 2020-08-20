@@ -1,18 +1,29 @@
 import React from 'react';
+import Speech from 'react-speech';
 
-export default function TodoItem(props) {
+const TodoItem = (props) => {
   const { data, deleteItem, alterItem } = props;
-
   return (
     <li className="collection-item hoverable todo-item">
       <div className="todo">
         <section>
-          <h4 style={{ textDecoration: data.done ? 'line-through' : 'none' }}>
+          <h5 style={{ textDecoration: data.done ? 'line-through' : 'none' }}>
             {data.name}
-          </h4>
+            <Speech
+              textAsButton={true}
+              displayText={
+                <i className="material-icons teal-text">volume_up</i>
+              }
+              className="chip"
+              style={{ background: 'transparent' }}
+              rate="1.3"
+              text={data.name}
+              lang="EN-US"
+            />
+          </h5>
           <p className="grey-text chip todo-date">
             <span className="teal-text">Added On : </span>
-            {new Date(data.date).toLocaleString('en-US', {
+            {data.date.toLocaleString('en-US', {
               weekday: 'long',
               year: 'numeric',
               month: 'long',
@@ -23,31 +34,44 @@ export default function TodoItem(props) {
           </p>
         </section>
         <section className="todo-actions">
-          <a
-            className="secondary-content waves-effect"
-            onClick={deleteItem.bind(null, data.id)}
-          >
-            <i className="material-icons red-text">delete</i>
-          </a>
-          {data.done ? (
-            <a
-              className="secondary-content waves-effect"
-              style={{ margin: '0px 20px' }}
-              onClick={alterItem.bind(null, data.id)}
-            >
-              <i className="material-icons red-text">clear</i>
-            </a>
+          {data.loading ? (
+            <img
+              src="../loader.gif"
+              alt="loading..."
+              height="50px"
+              width="50px"
+            />
           ) : (
-            <a
-              className="secondary-content waves-effect"
-              style={{ margin: '0px 20px' }}
-              onClick={alterItem.bind(null, data.id)}
-            >
-              <i className="material-icons green-text">done</i>
-            </a>
+            <>
+              {data.done ? (
+                <a
+                  className="secondary-content waves-effect"
+                  style={{ margin: '0px 20px' }}
+                  onClick={alterItem.bind(null, data.id)}
+                >
+                  <i className="material-icons red-text">clear</i>
+                </a>
+              ) : (
+                <a
+                  className="secondary-content waves-effect"
+                  style={{ margin: '0px 20px' }}
+                  onClick={alterItem.bind(null, data.id)}
+                >
+                  <i className="material-icons teal-text">done</i>
+                </a>
+              )}
+              <a
+                className="secondary-content waves-effect"
+                onClick={deleteItem.bind(null, data.id)}
+              >
+                <i className="material-icons red-text">delete</i>
+              </a>
+            </>
           )}
         </section>
       </div>
     </li>
   );
-}
+};
+
+export default TodoItem;

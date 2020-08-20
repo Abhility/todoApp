@@ -4,7 +4,9 @@
   justify-content: space-between;
 }
 .header {
-  margin: 15px auto;
+  margin: 15px auto 100px auto;
+}
+.header h2 {
   font-family: fantasy;
   letter-spacing: 1.5px;
 }
@@ -16,16 +18,50 @@
   padding: 5px 15px !important;
   border-radius: 20px;
 }
+
+.todo-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.loader {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.action-button {
+  cursor: pointer;
+}
+
+.actions span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: auto;
+}
+.action-label {
+  font-weight: 1000;
+}
+
+.actions {
+  margin: 20px auto;
+}
+
+.todo-info {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.rs-container button {
+  background: transparent !important;
+}
 @media (max-width: 760px) {
   .todo {
     flex-direction: column;
   }
   .todo-actions {
-    width: 100%;
-    display: flex;
-    align-items: center;
     justify-content: space-evenly;
-    font-size: 20px;
-    margin: 10px auto;
   }
 }

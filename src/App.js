@@ -3,8 +3,8 @@ import TodoApp from './components/TodoApp';
 
 const App = () => {
   return (
-    <div className="container">
-      <h2 className="container teal-text header">TodoList App</h2>
+    <div className=" container header">
+      <h2 className="container teal-text">TodoList App</h2>
       <TodoApp />
     </div>
   );
